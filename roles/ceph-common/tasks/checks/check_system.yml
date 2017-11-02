@@ -72,17 +72,17 @@
   when:
     - ansible_service_mgr != 'systemd'
 
-- name: fail on unsupported distribution for iscsi gateways
-  fail:
-    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS"
-  when:
-    - ansible_distribution not in ['RedHat', 'CentOS']
-    - iscsi_gw_group_name in group_names
+#- name: fail on unsupported distribution for iscsi gateways
+#  fail:
+#    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS"
+#  when:
+#    - ansible_distribution not in ['RedHat', 'CentOS']
+#    - iscsi_gw_group_name in group_names
 
-- name: fail on unsupported distribution version for iscsi gateways
-  fail:
-    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS >= 7.4"
-  when:
-    - ansible_distribution in ['RedHat', 'CentOS']
-    - ansible_distribution_version < '7.4'
-    - iscsi_gw_group_name in group_names
+#- name: fail on unsupported distribution version for iscsi gateways
+#  fail:
+#    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS >= 7.4"
+#  when:
+#    - ansible_distribution in ['RedHat', 'CentOS']
+#    - ansible_distribution_version < '7.4'
+#    - iscsi_gw_group_name in group_names

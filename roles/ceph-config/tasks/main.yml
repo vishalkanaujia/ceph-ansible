@@ -30,6 +30,7 @@
   - name: "generate ceph configuration file: {{ cluster }}.conf"
     action: config_template
     args:
+      #src: "{{ fetch_directory }}/ceph.conf.{{ lookup('env', 'D42_CLUSTER_TYPE') }}.j2"
       src: ceph.conf.j2
       dest: /etc/ceph/ceph.d/{{ cluster }}.conf
       owner: "ceph"
@@ -80,7 +81,7 @@
     register: cluster_uuid
     become: false
     when:
-      - generate_fsid
+      - fsid != '4a158d27-f750-41d5-9e7f-26ce4c9d2d45'
 
   - name: read cluster uuid if it already exists
     local_action: command cat {{ fetch_directory }}/ceph_cluster_uuid.conf
@@ -89,7 +90,7 @@
     register: cluster_uuid
     become: false
     when:
-      - generate_fsid
+      - fsid != '4a158d27-f750-41d5-9e7f-26ce4c9d2d45'
     tags:
       - always
 

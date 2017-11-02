@@ -1,10 +1,19 @@
 ---
+- name: set_fact monitor_name ansible_hostname
+  set_fact:
+    monitor_name: "{{ ansible_hostname }}"
+    cluster: "ceph"
+    ceph_release: luminous
+    fsid: "68e8e1db-a4fb-4c80-9e9c-56577d841618"
+    monitor_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2bug=="
+    admin_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2hug=="
+
 - name: generate monitor initial keyring
   local_action: shell python2 -c "import os ; import struct ; import time; import base64 ; key = os.urandom(16) ; header = struct.pack('<hiih',1,int(time.time()),0,len(key)) ; print base64.b64encode(header + key)" | tee {{ fetch_directory }}/monitor_keyring.conf
     creates={{ fetch_directory }}/monitor_keyring.conf
   register: monitor_keyring
   become: false
-  when: cephx
+  when: monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
 
 - name: read monitor initial keyring if it already exists
   local_action: command cat {{ fetch_directory }}/monitor_keyring.conf
@@ -12,7 +21,7 @@
   changed_when: false
   register: monitor_keyring
   become: false
-  when: cephx
+  when: monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
   tags:
     - always
 
@@ -20,7 +29,6 @@
   command: ceph-authtool /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }} --create-keyring --name=mon. --add-key={{ monitor_secret }} --cap mon 'allow *'
   args:
     creates: /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
-  when: cephx
 
 - name: set initial monitor key permissions
   file:
@@ -28,11 +36,11 @@
     owner: "ceph"
     group: "ceph"
     mode: "0600"
-  when: cephx
 
 - name: create (and fix ownership of) monitor directory
   file:
     path: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}
+    #path: "/var/lib/ceph/mon/ceph-d42-upgrade-test-none-541079"
     state: directory
     owner: "ceph"
     group: "ceph"
@@ -44,7 +52,6 @@
     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow' --cap mgr 'allow *'"
   when:
     - ceph_release_num[ceph_release] >= ceph_release_num.luminous
-    - cephx
     - admin_secret != 'admin_secret'
 
 - name: set_fact ceph_authtool_cap < ceph_release_num.luminous
@@ -52,7 +59,6 @@
     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'"
   when:
     - ceph_release_num[ceph_release] < ceph_release_num.luminous
-    - cephx
     - admin_secret != 'admin_secret'
 
 - name: create custom admin keyring
@@ -61,7 +67,6 @@
     creates: /etc/ceph/{{ cluster }}.client.admin.keyring
   register: create_custom_admin_secret
   when:
-    - cephx
     - admin_secret != 'admin_secret'
 
 - name: set ownership of admin keyring
@@ -79,19 +84,26 @@
   command: ceph-authtool /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }} --import-keyring /etc/ceph/{{ cluster }}.client.admin.keyring
   when:
     - not create_custom_admin_secret.get('skipped')
-    - cephx
     - admin_secret != 'admin_secret'
+
+- name: set_fact ceph_authtool_cap >= ceph_release_num.luminous
+  set_fact:
+    ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow' --cap mgr 'allow *'"
+  when:
+    - ceph_release_num[ceph_release] >= ceph_release_num.luminous
+    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+
+- name: set_fact ceph_authtool_cap < ceph_release_num.luminous
+  set_fact:
+    ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'"
+  when:
+    - ceph_release_num[ceph_release] < ceph_release_num.luminous
+    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
 
 - name: ceph monitor mkfs with keyring
   command: ceph-mon --cluster {{ cluster }} --setuser ceph --setgroup ceph --mkfs -i {{ monitor_name }} --fsid {{ fsid }} --keyring /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
   args:
     creates: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}/keyring
+    #creates: "/var/lib/ceph/mon/ceph-d42-upgrade-test-none-541079/keyring"
   when:
-    - cephx
-
-- name: ceph monitor mkfs without keyring
-  command: ceph-mon --cluster {{ cluster }} --setuser ceph --setgroup ceph --mkfs -i {{ monitor_name }} --fsid {{ fsid }}
-  args:
-    creates: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}/store.db
-  when:
-    - not cephx
+    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='

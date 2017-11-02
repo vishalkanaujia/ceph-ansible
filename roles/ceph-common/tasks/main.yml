@@ -57,9 +57,8 @@
 - name: get ceph version
   command: ceph --version
   changed_when: false
+  check_mode: no
   register: ceph_version
-  tags:
-    - always
 
 - name: set_fact ceph_version
   set_fact:
@@ -90,3 +89,11 @@
 
 - name: include configure_cluster_name.yml
   include: configure_cluster_name.yml
+
+#- name: include configure_memory_allocator.yml
+#  include: configure_memory_allocator.yml
+#  when:
+#    - (ceph_tcmalloc_max_total_thread_cache | int) > 0
+#    - osd_objectstore == 'filestore'
+#    - (ceph_origin == 'repository' or ceph_origin == 'distro')
+...
