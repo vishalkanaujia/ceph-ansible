@@ -2,11 +2,11 @@
 - name: set_fact monitor_name ansible_hostname
   set_fact:
     monitor_name: "{{ ansible_hostname }}"
-    cluster: "ceph"
+    cluster: "{{ lookup('env', 'D42_CLUSTER_NAME') }}"
     ceph_release: luminous
-    fsid: "68e8e1db-a4fb-4c80-9e9c-56577d841618"
-    monitor_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2bug=="
-    admin_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2hug=="
+    fsid: "{{ lookup('env', 'D42_FSID') }}"
+    monitor_secret: "{{ lookup('env', 'D42_MONITOR_SECRET') }}"
+    admin_secret: "{{ lookup('env', 'D42_ADMIN_SECRET') }}"
 
 - name: generate monitor initial keyring
   local_action: shell python2 -c "import os ; import struct ; import time; import base64 ; key = os.urandom(16) ; header = struct.pack('<hiih',1,int(time.time()),0,len(key)) ; print base64.b64encode(header + key)" | tee {{ fetch_directory }}/monitor_keyring.conf

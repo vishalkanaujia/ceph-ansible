@@ -1,5 +1,14 @@
 ---
 # ceph-common
+- name: set_fact monitor_name ansible_hostname
+  set_fact:
+    monitor_name: "{{ ansible_hostname }}"
+    cluster: "ceph"
+    ceph_release: luminous
+    fsid: "68e8e1db-a4fb-4c80-9e9c-56577d841618"
+    monitor_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2bug=="
+    admin_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2hug=="
+
 - block:
   - name: create ceph conf directory and assemble directory
     file:
