@@ -13,7 +13,7 @@
     creates={{ fetch_directory }}/monitor_keyring.conf
   register: monitor_keyring
   become: false
-  when: monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+  when: cephx 
 
 - name: read monitor initial keyring if it already exists
   local_action: command cat {{ fetch_directory }}/monitor_keyring.conf
@@ -21,7 +21,7 @@
   changed_when: false
   register: monitor_keyring
   become: false
-  when: monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+  when: cephx
   tags:
     - always
 
@@ -40,7 +40,6 @@
 - name: create (and fix ownership of) monitor directory
   file:
     path: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}
-    #path: "/var/lib/ceph/mon/ceph-d42-upgrade-test-none-541079"
     state: directory
     owner: "ceph"
     group: "ceph"
@@ -91,14 +90,16 @@
     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow' --cap mgr 'allow *'"
   when:
     - ceph_release_num[ceph_release] >= ceph_release_num.luminous
-    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+    - cephx
+    - admin_secret != 'admin_secret'
 
 - name: set_fact ceph_authtool_cap < ceph_release_num.luminous
   set_fact:
     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'"
   when:
     - ceph_release_num[ceph_release] < ceph_release_num.luminous
-    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+    - cephx
+    - admin_secret != 'admin_secret'
 
 - name: ceph monitor mkfs with keyring
   command: ceph-mon --cluster {{ cluster }} --setuser ceph --setgroup ceph --mkfs -i {{ monitor_name }} --fsid {{ fsid }} --keyring /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
@@ -106,4 +107,4 @@
     creates: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}/keyring
     #creates: "/var/lib/ceph/mon/ceph-d42-upgrade-test-none-541079/keyring"
   when:
-    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+    - cephx

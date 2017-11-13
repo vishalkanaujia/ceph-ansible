@@ -39,8 +39,8 @@
   - name: "generate ceph configuration file: {{ cluster }}.conf"
     action: config_template
     args:
-      #src: "{{ fetch_directory }}/ceph.conf.{{ lookup('env', 'D42_CLUSTER_TYPE') }}.j2"
-      src: ceph.conf.j2
+      src: "{{ fetch_directory }}/ceph.conf.{{ lookup('env', 'D42_CLUSTER_TYPE') }}.j2"
+      #src: ceph.conf.j2
       dest: /etc/ceph/ceph.d/{{ cluster }}.conf
       owner: "ceph"
       group: "ceph"
