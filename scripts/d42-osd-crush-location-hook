@@ -1,0 +1,13 @@
+#!/bin/bash
+source /etc/default/megh/env_var
+if [[ $MEGH_INSTANCE_TYPE == "d1.internal" ]]
+then
+    type=ssdcache
+elif [[ $MEGH_INSTANCE_TYPE == "d1"* ]]
+then
+    type=hdd
+elif [[ $MEGH_INSTANCE_TYPE == "i1"* ]]
+then
+    type=ssd
+fi
+echo "host=`hostname -f`-$type root=$type datacenter=in-chennai-1-$type rack=$MEGH_FAULT_DOMAIN_ID-$type"

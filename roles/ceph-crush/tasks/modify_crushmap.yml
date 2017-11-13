@@ -1,0 +1,27 @@
+- include_vars: group_vars/all.yml
+
+- name: create replicated ruleset for HDDs
+  command: "sudo ceph osd crush rule create-simple replicated_ruleset_hdd hdd rack"
+  with_together: "{{ lookup('env','D42_CLUSTER_TYPE') }}"
+  when: item.0  == "sa" or item.0 == "bk" or item.0 =="ar"
+
+#- name: create replicated ruleset for SSDs
+#  command: "sudo ceph osd crush rule create-simple replicated_ruleset_ssd ssd rack"
+#  with_together: "{{ lookup('env','D42_CLUSTER_TYPE') }}"
+#  when: item.0 == "sa"
+
+#- name: create replicated ruleset for SSDs
+ # command: "sudo ceph osd crush rule create-simple replicated_ruleset_ssdcache ssdcache rack"
+ # with_together: "{{ lookup('env','D42_CLUSTER_TYPE') }}"
+ # when: item.0 == "sa"
+
+- name: create profile for ec ruleset
+  command: "sudo ceph osd erasure-code-profile set ecprofile ruleset-failure-domain=rack ruleset-root=hdd k=10 m=5 plugin=jerasure"
+  with_together: "{{ lookup('env','D42_CLUSTER_TYPE') }}"
+  when: item.0 == "ar"
+
+- name: create ec ruleset for HDDs
+  command: "sudo ceph osd crush rule create-erasure erasurecoded_ruleset_hdd ecprofile"
+  with_together: "{{ lookup('env','D42_CLUSTER_TYPE') }}"
+  when: item.0 == "ar"
+

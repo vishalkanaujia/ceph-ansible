@@ -1,0 +1,82 @@
+#---
+#- name: get list of all OSD hosts
+#  set_fact: hsts="{% set resList=[] %}{% for hosts in groups['i1xlosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.append(hosts) }}{% endfor %}{% endfor          %}{% for hosts in groups['d1losds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.append(hosts) }}{% endfor %}{% endfor          %}{% for hosts in groups['d1mosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.append(hosts) }}{% endfor %}{% endfor          %}{% for hosts in groups['d1xlosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.append(hosts) }}{% endfor %}{% endfor          %}{% for hosts in groups['d1internalosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.append(hosts) }}{% endfor %}{% endfor          %}{{resList}}"
+#
+#- debug: var=hsts
+#
+#- name: create list with all OSD Ids
+#  set_fact: osdIds="{% set resList=[] %}{% for hosts in groups['i1xlosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{% for hosts in groups['d1losds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{% for hosts in groups['d1mosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor          %}{% for hosts in groups['d1xlosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{% for hosts in groups['d1internalosds'] %}{% for i in hostvars[hosts].osdIds.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{{resList}}"
+#
+#- debug: var=osdIds
+#
+#- name: create list with all devices 
+#  set_fact: devTyps="{% set resList=[] %}{% for hosts in groups['i1xlosds']  %}{% for i in hostvars[hosts].deviceType.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{% for hosts in groups['d1losds']  %}{% for i in hostvars[hosts].deviceType.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{% for hosts in groups['d1mosds'] %}{% for i in hostvars[hosts].deviceType.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor          %}{% for hosts in groups['d1xlosds']  %}{% for i in hostvars[hosts].deviceType.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{% for hosts in groups['d1internalosds']  %}{% for i in hostvars[hosts].deviceType.results %}{{ resList.extend([i.stdout]) }}{% endfor %}{% endfor  %}{{resList}}"
+#
+#- debug: var=devTyps
+#
+#- name: get hostnames of all hosts
+#  local_action: command sh ./scripts/hostname.sh {{ item.0  }} {{ lookup('env','D42_APPID') }}
+#  changed_when: False
+#  with_together:
+#  - hsts
+#  register: hnames
+#
+#- name: create list with all hostnames 
+#  set_fact: hostnames="{% set resList=[] %}{% for i in hnames.results %}{{ resList.append(i.stdout) }}{% endfor  %}{{resList}}"
+#
+#- debug: var=hostnames
+#
+#- name: get racks for all hosts
+#  local_action: command sh ./scripts/rack.sh {{ item.0  }} {{ lookup('env','D42_APPID') }}
+#  changed_when: False
+#  with_together:
+#  - hsts
+#  register: racks
+#
+#- name: create list with all racknames
+#  set_fact: racknames="{% set resList=[] %}{% for i in racks.results %}{{ resList.append(i.stdout) }}{% endfor  %}{{resList}}"
+#
+#- debug: var=racknames
+#
+#- name: get datacenters for all hosts
+#  local_action: command sh ./scripts/dc.sh {{ item.0  }} {{ lookup('env','D42_APPID') }}
+#  changed_when: False
+#  with_together:
+#  - hsts
+#  register: dcs
+#
+#- name: create list with all datacenter names
+#  set_fact: dcnames="{% set resList=[] %}{% for i in dcs.results %}{{ resList.append(i.stdout) }}{% endfor  %}{{resList}}"
+#
+#- debug: var=dcnames
+#
+#- name: Modify the crush map
+#  command: "ceph osd crush create-or-move {{ item.1 }} 1.0 host={{ item.2 }}-{{ item.5 }} rack={{ item.3 }}-{{ item.5 }} datacenter={{ item.4 }}-{{ item.5 }} root={{ item.5 }}"
+#  with_together: 
+#    - devs
+#    - osdIds
+#    - hostnames
+#    - racknames
+#    - dcnames
+#    - devTyps
+#  when: item.1|int >= 0
+#  ignore_errors: false
+
+#- name: remove rbd pool
+#  command: "sudo ceph osd pool delete rbd rbd --yes-i-really-really-mean-it"
+#
+#- name: Remove junk crush entries for hosts
+#  command: "ceph osd crush remove {{item.0}}"
+#  with_together: 
+#    - hostnames
+#  ignore_errors: true
+#
+#- name: Remove crush entry for default root
+#  command: "ceph osd crush remove default"
+#  ignore_errors: true
+#
+- include: modify_crushmap.yml
+
+- include: set_pools.yml
+
+- include: modify_region.yml

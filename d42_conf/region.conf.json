@@ -1,0 +1,24 @@
+{
+    "name": "in",
+    "api_name": "in",
+    "is_master": "true",
+    "endpoints": [],
+    "hostnames": [],
+    "master_zone": "in-chennai",
+    "zones": [
+        {
+            "name": "in-chennai",
+            "endpoints": [],
+            "log_meta": "false",
+            "log_data": "false",
+            "bucket_index_max_shards": 32
+        }
+    ],
+    "placement_targets": [
+        {
+            "name": "default-placement",
+            "tags": []
+        }
+    ],
+    "default_placement": "default-placement"
+}

@@ -1,0 +1,26 @@
+{
+    "domain_root": ".in-chennai-1.rgw",
+    "control_pool": ".in-chennai-1.rgw.control",
+    "gc_pool": ".in-chennai-1.rgw.gc",
+    "log_pool": ".in-chennai-1.log",
+    "intent_log_pool": ".in-chennai-1.intent-log",
+    "usage_log_pool": ".in-chennai-1.usage",
+    "user_keys_pool": ".in-chennai-1.users",
+    "user_email_pool": ".in-chennai-1.users.email",
+    "user_swift_pool": ".in-chennai-1.users.swift",
+    "user_uid_pool": ".in-chennai-1.users.uid",
+    "system_key": {
+        "access_key": "",
+        "secret_key": ""
+    },
+    "placement_pools": [
+        {
+            "key": "default-placement",
+            "val": {
+                "index_pool": ".in-chennai-1.rgw.buckets.index",
+                "data_pool": ".in-chennai-1.rgw.buckets",
+                "data_extra_pool": ".in-chennai-1.rgw.buckets.extra"
+            }
+        }
+    ]
+}

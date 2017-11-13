@@ -1,0 +1,24 @@
+- include_vars: group_vars/all.yml
+
+- name: copy zone map file
+  copy: src=d42_conf/zone.conf.json dest=/tmp/zone.conf.json 
+
+- name: create a realm
+  become: true
+  shell: "radosgw-admin realm create --rgw-realm=d42 --default"
+  run_once: true
+
+- name: create a zonegroup
+  become: true
+  shell: "radosgw-admin zonegroup create --rgw-zonegroup=in --rgw-realm=d42 --master --default"
+  run_once: true
+
+- name: create a zone
+  become: true
+  shell: "radosgw-admin zone create --rgw-zonegroup=in --rgw-zone=in-chennai --master --default"
+  run_once: true
+
+- name: update zone map file
+  become: true
+  shell: "radosgw-admin zone set --rgw-zone=in-chennai --infile /tmp/zone.conf.json"
+  shell: "radosgw-admin period update --commit"

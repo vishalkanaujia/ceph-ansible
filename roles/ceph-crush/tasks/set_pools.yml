@@ -1,0 +1,29 @@
+- include_vars: group_vars/prod-d42sa.yml
+
+- name: Initialize an empty list for our strings
+  set_fact:
+    resList: []
+
+- name: Generate Pool commands
+  local_action: command python ./scripts/pgcalc.py {{ item.0 }} {{ item.1 }} {{ item.2 }} {{ item.3 }} {{ item.4 }} {{ item.5 }} {{ item.6  }} {{ item.7 }}
+  changed_when: False
+  with_together:
+  - "{{ osdNum }}"
+  - "{{ size }}"
+  - "{{ targetPGs }}"
+  - "{{ percData }}"
+  - "{{ pools }}"
+  - "{{ poolRoot }}"
+  - "{{ poolType }}"
+  - "{{ min_size }}"
+  register: pool_cmd
+
+- name: create list with all commands
+  set_fact:
+    cmds:
+      "{% for i in pool_cmd.results %} {{ resList.append(i.stdout) }} {% endfor  %} {{resList}}"
+
+- name: exec commands
+  shell: "{{ item }}"
+  with_items:
+   "{{ resList }}"
