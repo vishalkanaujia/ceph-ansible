@@ -21,13 +21,15 @@
 - name: append cmds to list
   set_fact:
     cmds:
-          "{% for i in pool_cmd.results %} {{ i.stdout }}/ {% endfor %}"
+          "{% for i in pool_cmd.results %}/{{i.stdout}}{% endfor %}"
 
 - name: xyz
   set_fact: acommand="{{cmds.split('/')}}"
 
 - name: run commands
+  become: true
   msg: "{{item}}"
   shell: "{{item}}"
   with_items: "{{acommand}}"
+  when: 'item not in ""'
 
