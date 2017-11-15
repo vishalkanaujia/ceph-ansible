@@ -8,7 +8,7 @@
 - name: include check_mandatory_vars.yml
   include: check_mandatory_vars.yml
 
-- copy: src=./scripts/d42-osd-crush-location-hook dest=/usr/bin/d42-osd-crush-location-hook mode=555
+#- copy: src=./scripts/d42-osd-crush-location-hook dest=/usr/bin/d42-osd-crush-location-hook mode=555
 
 - name: include pre_requisite.yml
   include: pre_requisite.yml

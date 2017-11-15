@@ -35,12 +35,8 @@
 
   hosts:
     - "{{ mon_group_name|default('mons') }}"
-    - "{{ osd_group_name|default('osds') }}"
-    - "{{ mds_group_name|default('mdss') }}"
+    - "{{ osd_group_name|default('d1losds') }}"
     - "{{ rgw_group_name|default('rgws') }}"
-    - "{{ rbdmirror_group_name|default('rbdmirrors') }}"
-    - "{{ nfs_group_name|default('nfss') }}"
-    - "{{ client_group_name|default('clients') }}"
     - "{{ mgr_group_name|default('mgrs') }}"
 
   become: true

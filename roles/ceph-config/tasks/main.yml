@@ -9,6 +9,8 @@
     monitor_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2bug=="
     admin_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2hug=="
 
+- copy: src=./scripts/d42-osd-crush-location-hook dest=/usr/bin/d42-osd-crush-location-hook mode=555
+
 - block:
   - name: create ceph conf directory and assemble directory
     file:

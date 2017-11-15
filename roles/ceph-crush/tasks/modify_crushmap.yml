@@ -1,7 +1,8 @@
 - include_vars: group_vars/all.yml
 
 - name: create replicated ruleset for HDDs
-  command: "sudo ceph osd crush rule create-simple replicated_ruleset_hdd hdd rack"
+  become: true
+  command: "ceph osd crush rule create-simple replicated_ruleset_hdd hdd rack"
   with_together: "{{ lookup('env','D42_CLUSTER_TYPE') }}"
   when: item.0  == "sa" or item.0 == "bk" or item.0 =="ar"
 
