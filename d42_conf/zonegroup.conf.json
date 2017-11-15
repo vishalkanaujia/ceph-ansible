@@ -1,0 +1,14 @@
+{
+    "id": "79dde5cf-6559-4b7b-a94e-7231dda5731a",
+    "name": "in",
+    "api_name": "in",
+    "is_master": "true",
+    "endpoints": [],
+    "hostnames": [],
+    "hostnames_s3website": [],
+    "master_zone": "",
+    "zones": [],
+    "placement_targets": [],
+    "default_placement": "",
+    "realm_id": "2fb8d48d-5b16-4e24-964d-fe8704c5b83d"
+}

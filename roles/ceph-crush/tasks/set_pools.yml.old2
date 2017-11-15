@@ -1,7 +1,8 @@
 - include_vars: group_vars/prod-d42sa.yml
 
-- name: define cmds
-  set_fact: cmds
+#- name: Initialize an empty list for our strings
+#  set_fact:
+#    resList: []
 
 - name: Generate Pool commands
   local_action: command python ./scripts/pgcalc.py {{ item.0 }} {{ item.1 }} {{ item.2 }} {{ item.3 }} {{ item.4 }} {{ item.5 }} {{ item.6  }} {{ item.7 }}
@@ -18,16 +19,15 @@
   - "{{ min_size }}"
   register: pool_cmd
 
-- name: append cmds to list
+- name: create list with all commands
   set_fact:
-    cmds:
-          "{% for i in pool_cmd.results %} {{ i.stdout }}/ {% endfor %}"
+    allcmds:
+      "{% set resList=[] %}{% for i in pool_cmd.results %} {{ resList.append(i.stdout) }} {% endfor %} {{resList}}"
 
-- name: xyz
-  set_fact: acommand="{{cmds.split('/')}}"
-
-- name: run commands
-  msg: "{{item}}"
-  shell: "{{item}}"
-  with_items: "{{acommand}}"
-
+- name: exec commands
+  shell: "{{ item[0] }}"
+  args:
+    executable: /bin/bash
+  #with_flattened:
+  with_items:
+    - "{{ allcmds }}"

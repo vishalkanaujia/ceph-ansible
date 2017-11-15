@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Abhishek Varhsney
+  description: Configures crush map
+  license: Apache
+  min_ansible_version: 1.7
+  platforms:
+    - name: Ubuntu
+      versions:
+        - trusty
+  categories:
+    - system
+#dependencies:
+#  - { role: ceph-common, when: not docker }

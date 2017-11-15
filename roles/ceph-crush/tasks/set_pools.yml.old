@@ -1,0 +1,42 @@
+- include_vars: group_vars/prod-d42sa.yml
+
+- name: Initialize an empty list for our strings
+  set_fact:
+    resList: []
+
+- name: Generate Pool commands
+  local_action: command python ./scripts/pgcalc.py {{ item.0 }} {{ item.1 }} {{ item.2 }} {{ item.3 }} {{ item.4 }} {{ item.5 }} {{ item.6  }} {{ item.7 }}
+  msg: "Element:: {{ pool_cmd.stdout }}"
+  changed_when: False
+  with_together:
+  - "{{ osdNum }}"
+  - "{{ size }}"
+  - "{{ targetPGs }}"
+  - "{{ percData }}"
+  - "{{ pools }}"
+  - "{{ poolRoot }}"
+  - "{{ poolType }}"
+  - "{{ min_size }}"
+  register: pool_cmd
+
+- name: create list with all commands
+  set_fact:
+    allcmds:
+      "{% for i in pool_cmd.results %} {{ resList.append(i.stdout|to_yaml) }} {% endfor %} {{resList}}"
+
+#- name: exec commands
+- debug:
+    set_fact: newc: ["{{ allcmds.stdout_lines | list }}"] 
+       #newc: ["{{ allcmds.stdout_lines | list | join("\", \"") }}"] 
+    #msg: "at index {{item.0}} item is {{item.1}}"
+      msg: "at {{newc}}"
+    with_items:
+      - "{{ newc }}"
+
+- name: exec commands
+  shell: "{{ item | to_json }}"
+  args:
+    executable: /bin/bash
+  with_flattened:
+  #with_items:
+    - "{{ allcmds }}"

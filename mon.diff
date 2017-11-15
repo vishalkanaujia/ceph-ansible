@@ -1,0 +1,454 @@
+diff --git a/ansible.cfg b/ansible.cfg
+index e7259e0..6361f90 100644
+--- a/ansible.cfg
++++ b/ansible.cfg
+@@ -6,7 +6,8 @@ ansible_managed = Please do not change this file directly since it is managed by
+ action_plugins = plugins/actions
+ roles_path = ./roles
+ # Be sure the user running Ansible has permissions on the logfile
+-log_path = /var/log/ansible.log
++#log_path = /var/log/ansible.log
++log_path = /tmp/ansible.log
+ 
+ # Disable them in the context of https://review.openstack.org/#/c/469644
+ retry_files_enabled = False
+diff --git a/roles/ceph-common/tasks/checks/check_system.yml b/roles/ceph-common/tasks/checks/check_system.yml
+index 6d31d12..98622e8 100644
+--- a/roles/ceph-common/tasks/checks/check_system.yml
++++ b/roles/ceph-common/tasks/checks/check_system.yml
+@@ -72,17 +72,17 @@
+   when:
+     - ansible_service_mgr != 'systemd'
+ 
+-- name: fail on unsupported distribution for iscsi gateways
+-  fail:
+-    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS"
+-  when:
+-    - ansible_distribution not in ['RedHat', 'CentOS']
+-    - iscsi_gw_group_name in group_names
++#- name: fail on unsupported distribution for iscsi gateways
++#  fail:
++#    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS"
++#  when:
++#    - ansible_distribution not in ['RedHat', 'CentOS']
++#    - iscsi_gw_group_name in group_names
+ 
+-- name: fail on unsupported distribution version for iscsi gateways
+-  fail:
+-    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS >= 7.4"
+-  when:
+-    - ansible_distribution in ['RedHat', 'CentOS']
+-    - ansible_distribution_version < '7.4'
+-    - iscsi_gw_group_name in group_names
++#- name: fail on unsupported distribution version for iscsi gateways
++#  fail:
++#    msg: "iSCSI gateways can only be deployed on Red Hat Enterprise Linux or CentOS >= 7.4"
++#  when:
++#    - ansible_distribution in ['RedHat', 'CentOS']
++#    - ansible_distribution_version < '7.4'
++#    - iscsi_gw_group_name in group_names
+diff --git a/roles/ceph-common/tasks/installs/debian_custom_repository.yml b/roles/ceph-common/tasks/installs/debian_custom_repository.yml
+index d7c3af3..92bd5ee 100644
+--- a/roles/ceph-common/tasks/installs/debian_custom_repository.yml
++++ b/roles/ceph-common/tasks/installs/debian_custom_repository.yml
+@@ -1,6 +1,7 @@
+ ---
+ - name: configure debian custom repository
+   apt_repository:
+-    repo: "deb {{ ceph_custom_repo }} {{ ansible_lsb.codename }} main"
++    #repo: "deb {{ ceph_custom_repo }} {{ ansible_lsb.codename }} main"
++    repo: "deb {{ ceph_custom_repo }}"
+     state: present
+   changed_when: false
+diff --git a/roles/ceph-common/tasks/installs/install_debian_packages.yml b/roles/ceph-common/tasks/installs/install_debian_packages.yml
+index 46d65b6..fc69ae1 100644
+--- a/roles/ceph-common/tasks/installs/install_debian_packages.yml
++++ b/roles/ceph-common/tasks/installs/install_debian_packages.yml
+@@ -12,18 +12,18 @@
+     state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
+     default_release: "{{ ceph_stable_release_uca | default(omit) }}{{ ansible_distribution_release ~ '-backports' if ceph_origin == 'distro' and ceph_use_distro_backports else ''}}"
+ 
+-- name: install ceph-test for debian
+-  apt:
+-    name: ceph-test
+-    state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
+-    default_release: "{{ ceph_stable_release_uca | default(omit) }}{{ ansible_distribution_release ~ '-backports' if ceph_origin == 'distro' and ceph_use_distro_backports else ''}}"
+-  when:
+-    - ceph_test
++#- name: install ceph-test for debian
++#  apt:
++#    name: ceph-test
++#    state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
++#    default_release: "{{ ceph_stable_release_uca | default(omit) }}{{ ansible_distribution_release ~ '-backports' if ceph_origin == 'distro' and ceph_use_distro_backports else ''}}"
++#  when:
++#    - ceph_test
+ 
+-- name: install rados gateway for debian
+-  apt:
+-    name: radosgw
+-    state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
+-    update_cache: yes
+-  when:
+-    - rgw_group_name in group_names
++#- name: install rados gateway for debian
++#  apt:
++#    name: radosgw
++#    state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
++#    update_cache: yes
++#  when:
++#    - rgw_group_name in group_names
+diff --git a/roles/ceph-common/tasks/installs/install_on_debian.yml b/roles/ceph-common/tasks/installs/install_on_debian.yml
+index d96ad26..d9313d6 100644
+--- a/roles/ceph-common/tasks/installs/install_on_debian.yml
++++ b/roles/ceph-common/tasks/installs/install_on_debian.yml
+@@ -1,8 +1,8 @@
+ ---
+-- name: include configure_debian_repository_installation.yml
+-  include: configure_debian_repository_installation.yml
+-  when:
+-    - ceph_origin == 'repository'
++#- name: include configure_debian_repository_installation.yml
++#  include: configure_debian_repository_installation.yml
++#  when:
++#    - ceph_origin == 'repository'
+ 
+ - name: install dependencies
+   apt:
+diff --git a/roles/ceph-common/tasks/main.yml b/roles/ceph-common/tasks/main.yml
+index 20fa452..ac34d54 100644
+--- a/roles/ceph-common/tasks/main.yml
++++ b/roles/ceph-common/tasks/main.yml
+@@ -57,9 +57,8 @@
+ - name: get ceph version
+   command: ceph --version
+   changed_when: false
++  check_mode: no
+   register: ceph_version
+-  tags:
+-    - always
+ 
+ - name: set_fact ceph_version
+   set_fact:
+@@ -90,3 +89,11 @@
+ 
+ - name: include configure_cluster_name.yml
+   include: configure_cluster_name.yml
++
++#- name: include configure_memory_allocator.yml
++#  include: configure_memory_allocator.yml
++#  when:
++#    - (ceph_tcmalloc_max_total_thread_cache | int) > 0
++#    - osd_objectstore == 'filestore'
++#    - (ceph_origin == 'repository' or ceph_origin == 'distro')
++...
+diff --git a/roles/ceph-config/tasks/main.yml b/roles/ceph-config/tasks/main.yml
+index d256e1e..945584c 100644
+--- a/roles/ceph-config/tasks/main.yml
++++ b/roles/ceph-config/tasks/main.yml
+@@ -30,6 +30,7 @@
+   - name: "generate ceph configuration file: {{ cluster }}.conf"
+     action: config_template
+     args:
++      #src: "{{ fetch_directory }}/ceph.conf.{{ lookup('env', 'D42_CLUSTER_TYPE') }}.j2"
+       src: ceph.conf.j2
+       dest: /etc/ceph/ceph.d/{{ cluster }}.conf
+       owner: "ceph"
+@@ -80,7 +81,7 @@
+     register: cluster_uuid
+     become: false
+     when:
+-      - generate_fsid
++      - fsid != '4a158d27-f750-41d5-9e7f-26ce4c9d2d45'
+ 
+   - name: read cluster uuid if it already exists
+     local_action: command cat {{ fetch_directory }}/ceph_cluster_uuid.conf
+@@ -89,7 +90,7 @@
+     register: cluster_uuid
+     become: false
+     when:
+-      - generate_fsid
++      - fsid != '4a158d27-f750-41d5-9e7f-26ce4c9d2d45'
+     tags:
+       - always
+ 
+diff --git a/roles/ceph-defaults/defaults/main.yml b/roles/ceph-defaults/defaults/main.yml
+index a8ef2a1..e889ab1 100644
+--- a/roles/ceph-defaults/defaults/main.yml
++++ b/roles/ceph-defaults/defaults/main.yml
+@@ -299,7 +299,7 @@ rbd_client_admin_socket_path: /var/run/ceph # must be writable by QEMU and allow
+ # Eg. If you want to specify for each monitor which address the monitor will bind to you can set it in your **inventory host file** by using 'monitor_address' variable.
+ # Preference will go to monitor_address if both monitor_address and monitor_interface are defined.
+ # To use an IPv6 address, use the monitor_address setting instead (and set ip_version to ipv6)
+-monitor_interface: interface
++monitor_interface: eth0
+ monitor_address: 0.0.0.0
+ monitor_address_block: []
+ # set to either ipv4 or ipv6, whichever your network is using
+diff --git a/roles/ceph-mon/tasks/ceph_keys.yml b/roles/ceph-mon/tasks/ceph_keys.yml
+index 3c4096d..e953a09 100644
+--- a/roles/ceph-mon/tasks/ceph_keys.yml
++++ b/roles/ceph-mon/tasks/ceph_keys.yml
+@@ -1,24 +1,14 @@
+ ---
+-- name: collect admin and bootstrap keys
++- name: collect admin and bootstrap keys for luminous and higher
+   command: ceph-create-keys --cluster {{ cluster }} -i {{ monitor_name }} -t 30
+   args:
+     creates: /etc/ceph/{{ cluster }}.client.admin.keyring
+   changed_when: false
+   when:
+-    - cephx
+     - ceph_release_num[ceph_release] >= ceph_release_num.luminous
+   tags:
+     - always
+ 
+-- name: collect admin and bootstrap keys
+-  command: ceph-create-keys --cluster {{ cluster }} -i {{ monitor_name }}
+-  changed_when: false
+-  when:
+-    - cephx
+-    - ceph_release_num[ceph_release] < ceph_release_num.luminous
+-  tags:
+-    - always
+-
+ # NOTE (leseb): wait for mon discovery and quorum resolution
+ # the admin key is not instantaneously created so we have to wait a bit
+ # msg: is only supported as of Ansible 2.4.
+@@ -28,7 +18,6 @@
+     timeout: 30
+     msg: "Timed out while waiting for keyring creation. Check network settings on mon nodes."
+   when:
+-    - cephx
+     - (ansible_version.major == 2 and ansible_version.minor >= 4) or
+       ansible_version.major > 2
+ 
+@@ -37,7 +26,6 @@
+     path: /etc/ceph/{{ cluster }}.client.admin.keyring
+     timeout: 30
+   when:
+-    - cephx
+     - ansible_version.major == 2 and ansible_version.minor < 4
+ 
+ - name: test if initial mon keyring is in mon kv store
+@@ -55,8 +43,8 @@
+   changed_when: false
+   run_once: true
+   when:
+-    - is_initial_mon_keyring_in_kv.rc != 0
+     - cephx
++  #  - is_initial_mon_keyring_in_kv.rc != 0
+   tags:
+     - always
+ 
+@@ -66,7 +54,6 @@
+     creates: /etc/ceph/{{ cluster }}.client.restapi.keyring
+   changed_when: false
+   when:
+-    - cephx
+     - groups.get(restapi_group_name, []) | length > 0
+     - inventory_hostname == groups[mon_group_name]|last
+ 
+@@ -76,23 +63,20 @@
+     creates: /etc/ceph/{{ cluster }}.mgr.{{ hostvars[item]['ansible_hostname'] }}.keyring
+   changed_when: false
+   when:
+-    - cephx
+     - groups.get(mgr_group_name, []) | length > 0
+     - inventory_hostname == groups[mon_group_name]|last
+-    - ceph_release_num[ceph_release] > ceph_release_num.jewel
++    - ceph_release_num[ceph_release] >= ceph_release_num.luminous
+   with_items: "{{ groups.get(mgr_group_name, []) }}"
+ 
+-- name: crush_rules.yml
+-  include: crush_rules.yml
+-  when:
+-    - crush_rule_config
++#- name: crush_rules.yml
++#  include: crush_rules.yml
++#  when:
++#    - crush_rule_config
+ 
+ - name: find ceph keys
+   shell: ls -1 /etc/ceph/*.keyring
+   changed_when: false
+   register: ceph_keys
+-  when:
+-    - cephx
+   tags:
+     - always
+ 
+@@ -104,8 +88,6 @@
+     mode: "0600"
+   with_items:
+     - "{{ ceph_keys.get('stdout_lines') | default([]) }}"
+-  when:
+-    - cephx
+ 
+ - name: set_fact bootstrap_rbd_keyring
+   set_fact:
+@@ -125,7 +107,6 @@
+     - /var/lib/ceph/bootstrap-mds/{{ cluster }}.keyring
+     - "{{ bootstrap_rbd_keyring | default([]) }}"
+   when:
+-    - cephx
+     - inventory_hostname == groups[mon_group_name] | last
+ 
+ - name: drop in a motd script to report status when logging in
+diff --git a/roles/ceph-mon/tasks/deploy_monitors.yml b/roles/ceph-mon/tasks/deploy_monitors.yml
+index b759183..44ad0c1 100644
+--- a/roles/ceph-mon/tasks/deploy_monitors.yml
++++ b/roles/ceph-mon/tasks/deploy_monitors.yml
+@@ -1,10 +1,19 @@
+ ---
++- name: set_fact monitor_name ansible_hostname
++  set_fact:
++    monitor_name: "{{ ansible_hostname }}"
++    cluster: "ceph"
++    ceph_release: luminous
++    fsid: "68e8e1db-a4fb-4c80-9e9c-56577d841618"
++    monitor_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2bug=="
++    admin_secret: "AQBGn8tUwAKrKBAAbC+avmpBEGo65nzHyY2hug=="
++
+ - name: generate monitor initial keyring
+   local_action: shell python2 -c "import os ; import struct ; import time; import base64 ; key = os.urandom(16) ; header = struct.pack('<hiih',1,int(time.time()),0,len(key)) ; print base64.b64encode(header + key)" | tee {{ fetch_directory }}/monitor_keyring.conf
+     creates={{ fetch_directory }}/monitor_keyring.conf
+   register: monitor_keyring
+   become: false
+-  when: cephx
++  when: monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+ 
+ - name: read monitor initial keyring if it already exists
+   local_action: command cat {{ fetch_directory }}/monitor_keyring.conf
+@@ -12,7 +21,7 @@
+   changed_when: false
+   register: monitor_keyring
+   become: false
+-  when: cephx
++  when: monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+   tags:
+     - always
+ 
+@@ -20,7 +29,6 @@
+   command: ceph-authtool /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }} --create-keyring --name=mon. --add-key={{ monitor_secret }} --cap mon 'allow *'
+   args:
+     creates: /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
+-  when: cephx
+ 
+ - name: set initial monitor key permissions
+   file:
+@@ -28,11 +36,11 @@
+     owner: "ceph"
+     group: "ceph"
+     mode: "0600"
+-  when: cephx
+ 
+ - name: create (and fix ownership of) monitor directory
+   file:
+     path: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}
++    #path: "/var/lib/ceph/mon/ceph-d42-upgrade-test-none-541079"
+     state: directory
+     owner: "ceph"
+     group: "ceph"
+@@ -44,7 +52,6 @@
+     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow' --cap mgr 'allow *'"
+   when:
+     - ceph_release_num[ceph_release] >= ceph_release_num.luminous
+-    - cephx
+     - admin_secret != 'admin_secret'
+ 
+ - name: set_fact ceph_authtool_cap < ceph_release_num.luminous
+@@ -52,7 +59,6 @@
+     ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'"
+   when:
+     - ceph_release_num[ceph_release] < ceph_release_num.luminous
+-    - cephx
+     - admin_secret != 'admin_secret'
+ 
+ - name: create custom admin keyring
+@@ -61,7 +67,6 @@
+     creates: /etc/ceph/{{ cluster }}.client.admin.keyring
+   register: create_custom_admin_secret
+   when:
+-    - cephx
+     - admin_secret != 'admin_secret'
+ 
+ - name: set ownership of admin keyring
+@@ -79,19 +84,26 @@
+   command: ceph-authtool /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }} --import-keyring /etc/ceph/{{ cluster }}.client.admin.keyring
+   when:
+     - not create_custom_admin_secret.get('skipped')
+-    - cephx
+     - admin_secret != 'admin_secret'
+ 
++- name: set_fact ceph_authtool_cap >= ceph_release_num.luminous
++  set_fact:
++    ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow' --cap mgr 'allow *'"
++  when:
++    - ceph_release_num[ceph_release] >= ceph_release_num.luminous
++    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
++
++- name: set_fact ceph_authtool_cap < ceph_release_num.luminous
++  set_fact:
++    ceph_authtool_cap: "--cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'"
++  when:
++    - ceph_release_num[ceph_release] < ceph_release_num.luminous
++    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
++
+ - name: ceph monitor mkfs with keyring
+   command: ceph-mon --cluster {{ cluster }} --setuser ceph --setgroup ceph --mkfs -i {{ monitor_name }} --fsid {{ fsid }} --keyring /var/lib/ceph/tmp/keyring.mon.{{ monitor_name }}
+   args:
+     creates: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}/keyring
++    #creates: "/var/lib/ceph/mon/ceph-d42-upgrade-test-none-541079/keyring"
+   when:
+-    - cephx
+-
+-- name: ceph monitor mkfs without keyring
+-  command: ceph-mon --cluster {{ cluster }} --setuser ceph --setgroup ceph --mkfs -i {{ monitor_name }} --fsid {{ fsid }}
+-  args:
+-    creates: /var/lib/ceph/mon/{{ cluster }}-{{ monitor_name }}/store.db
+-  when:
+-    - not cephx
++    - monitor_secret != 'AQAWqilTCDh7CBAAawXt6kyTgLFCxSvJhTEmuw=='
+diff --git a/roles/ceph-mon/tasks/main.yml b/roles/ceph-mon/tasks/main.yml
+index 36b74b7..cc36eb1 100644
+--- a/roles/ceph-mon/tasks/main.yml
++++ b/roles/ceph-mon/tasks/main.yml
+@@ -1,10 +1,4 @@
+ ---
+-- name: set_fact docker_exec_cmd
+-  set_fact:
+-    docker_exec_cmd: "docker exec ceph-mon-{{ ansible_hostname }}"
+-  when:
+-    - containerized_deployment
+-
+ - name: include check_mandatory_vars.yml
+   include: check_mandatory_vars.yml
+ 
+@@ -28,27 +22,5 @@
+     - secure_cluster
+     - not containerized_deployment
+ 
+-- name: include docker/main.yml
+-  include: docker/main.yml
+-  when: containerized_deployment
+-
+ - name: include set_osd_pool_default_pg_num.yml
+   include: set_osd_pool_default_pg_num.yml
+-
+-# Create the pools listed in openstack_pools
+-- name: include openstack_config.yml
+-  include: openstack_config.yml
+-  when:
+-    - openstack_config
+-    - inventory_hostname == groups[mon_group_name] | last
+-
+-- name: include create_mds_filesystems.yml
+-  include: create_mds_filesystems.yml
+-  when:
+-    - groups[mds_group_name] is defined
+-    - groups[mds_group_name]|length > 0
+-    - inventory_hostname == groups[mon_group_name] | last
+-
+-- name: include calamari.yml
+-  include: calamari.yml
+-  when: calamari

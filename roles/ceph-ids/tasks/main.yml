@@ -1,0 +1,29 @@
+---
+- include_vars: group_vars/i1xlosds
+  when: inventory_hostname in {{ groups['i1xlosds'] }}
+
+- include_vars: group_vars/d1losds
+  when: inventory_hostname in {{ groups['d1losds'] }}
+
+- include_vars: group_vars/d1mosds
+  when: inventory_hostname in {{ groups['d1mosds'] }}
+
+- include_vars: group_vars/d1xlosds
+  when: inventory_hostname in {{ groups['d1xlosds'] }}
+
+- include_vars: group_vars/d1internalosds
+  when: inventory_hostname in {{ groups['d1internalosds'] }}
+
+- name: Get OSD Ids
+  shell: lsblk | grep $(echo {{item.0}} | rev | cut -d/ -f1 | rev) | grep osd | rev | cut -d- -f1 | rev
+  changed_when: False
+  with_together:
+  - devices
+  register: osdIds
+
+- name: Get device types
+  shell: echo {{ item.0 }}
+  changed_when: False
+  with_together:
+  - deviceTypes
+  register: deviceType
