@@ -35,9 +35,10 @@
 
   hosts:
     - "{{ mon_group_name|default('mons') }}"
-    - "{{ osd_group_name|default('d1losds') }}"
+    - "{{ osd_group_name|default('d1le1osds') }}"
+    #- "{{ osd_group_name|default('d1losds') }}"
     - "{{ rgw_group_name|default('rgws') }}"
-    - "{{ mgr_group_name|default('mgrs') }}"
+    - "{{ mgr_group_name|default('mgrs') }}"
 
   become: true
 
@@ -190,10 +191,10 @@
 - name: purge ceph osd cluster
 
   vars:
-    osd_group_name: osds
+    osd_group_name: d1le1osds
 
   hosts:
-    - "{{ osd_group_name|default('osds') }}"
+    - "{{ osd_group_name|default('d1le1osds') }}"
 
   gather_facts: false # Already gathered previously
 
@@ -534,7 +535,7 @@
 
   hosts:
     - "{{ mon_group_name|default('mons') }}"
-    - "{{ osd_group_name|default('osds') }}"
+    - "{{ osd_group_name|default('d1le1osds') }}"
     - "{{ mds_group_name|default('mdss') }}"
     - "{{ rgw_group_name|default('rgws') }}"
     - "{{ rbdmirror_group_name|default('rbdmirrors') }}"

@@ -17,15 +17,20 @@
 
 - name: create a realm
   become: true
-  shell: "radosgw-admin realm set --rgw-realm=d42 --infile=/tmp/realm.conf.json"
+  #shell: "radosgw-admin realm set --rgw-realm=d42 --infile=/tmp/realm.conf.json"
+  shell: "radosgw-admin realm create --rgw-realm=d42 --default"
   run_once: true
 
 - name: create a zonegroup
   become: true
-  shell: "radosgw-admin zonegroup set --infile=/tmp/zonegroup.conf.json"
+  #shell: "radosgw-admin zonegroup set --infile=/tmp/zonegroup.conf.json"
+  shell: "radosgw-admin zonegroup create --rgw-zonegroup=in --rgw-realm=d42 --master --default"
   run_once: true
 
-- name: update zone map file
+- name: create a zone
   become: true
-  shell: "radosgw-admin zone set --rgw-zone=in-chennai --infile /tmp/zone.conf.json"
-  shell: "radosgw-admin period update --commit"
+  shell: "radosgw-admin zone create --rgw-zone=.in-chennai-1 --rgw-zonegroup=in --master --default"
+
+#- name: update zone map file
+#  become: true
+#  shell: "radosgw-admin zone set --rgw-zone=.in-chennai-1 --infile /tmp/zone.conf.json"
