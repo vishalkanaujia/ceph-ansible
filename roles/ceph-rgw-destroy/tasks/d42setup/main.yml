@@ -1,0 +1,18 @@
+---
+- name: include basic checks
+  include: checks.yml
+
+- name: setup D42 realm, zonegroup and zone
+  include: setupd42.yml
+  notify:
+    - restart rgw
+
+# Continue with common tasks
+#- name: add zone to rgw stanza in ceph.conf
+#  ini_file:
+#    dest: "/etc/ceph/{{ cluster }}.conf"
+#    section: "client.rgw.{{ ansible_hostname }}"
+#    option: "rgw_zone"
+#    value: "{{ rgw_zone }}"
+#  notify:
+#    - restart rgw

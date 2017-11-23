@@ -1,0 +1,4 @@
+---
+- name: include d42setup/destroy.yml
+  include: d42setup/destroy.yml
+  static: False

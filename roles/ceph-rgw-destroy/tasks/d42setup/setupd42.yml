@@ -1,0 +1,36 @@
+- include_vars: group_vars/all.yml
+
+- name: copy realm files
+  copy:
+    src: "{{ fetch_directory }}/realm.conf.json"
+    dest: /tmp/realm.conf.json 
+
+- name: copy zonegroup files
+  copy:
+    src: "{{ fetch_directory }}/zonegroup.conf.json"
+    dest: /tmp/zonegroup.conf.json 
+
+- name: copy zone files
+  copy: 
+    src: "{{ fetch_directory }}/zone.conf.json"
+    dest: /tmp/zone.conf.json 
+
+- name: create a realm
+  become: true
+  #shell: "radosgw-admin realm set --rgw-realm=d42 --infile=/tmp/realm.conf.json"
+  shell: "radosgw-admin realm create --rgw-realm={{ rgw_realm }} --default"
+  run_once: true
+
+- name: create a zonegroup
+  become: true
+  #shell: "radosgw-admin zonegroup set --infile=/tmp/zonegroup.conf.json"
+  shell: "radosgw-admin zonegroup create --rgw-zonegroup={{ rgw_zonegroup }} --rgw-realm={{ rgw_realm }} --master --default"
+  run_once: true
+
+- name: create a zone
+  become: true
+  shell: "radosgw-admin zone create --rgw-zone={{ rgw_zone }}--rgw-zonegroup={{ rgw_zonegroup }} --master --default"
+
+#- name: update zone map file
+#  become: true
+#  shell: "radosgw-admin zone set --rgw-zone=.in-chennai-1 --infile /tmp/zone.conf.json"
