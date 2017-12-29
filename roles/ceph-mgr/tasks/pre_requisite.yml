@@ -1,4 +1,20 @@
 ---
+- name: set_fact ceph_config_keys
+  set_fact:
+    ceph_config_keys:
+      - /etc/ceph/{{ cluster }}.mgr.{{ ansible_hostname }}.keyring
+      - /etc/ceph/{{ cluster }}.client.admin.keyring
+
+- name: stat for ceph config and keys
+  local_action: stat path={{ fetch_directory }}/{{ fsid }}/{{ item }}
+  with_items: "{{ ceph_config_keys }}"
+  changed_when: false
+  become: false
+  failed_when: false
+  register: statconfig
+  tags:
+    - always
+
 - name: install ceph-mgr package on RedHat or SUSE
   package:
     name: ceph-mgr
@@ -30,24 +46,18 @@
     group: "ceph"
     mode: "0755"
 
-- name: copy mgr key
+- name: try to fetch ceph config and keys
   copy:
-    src: "{{ fetch_directory }}/{{ fsid }}/etc/ceph/{{ cluster }}.mgr.{{ ansible_hostname }}.keyring"
-    dest: "/var/lib/ceph/mgr/{{ cluster }}-{{ ansible_hostname }}/keyring"
+    src: "{{ fetch_directory }}/{{ fsid }}/{{ item.0 }}"
+    dest: "{{ item.0 }}"
     owner: "ceph"
     group: "ceph"
     mode: "0600"
-  when:
-    - cephx
-
-- name: set mgr key permissions
-  file:
-    path: /var/lib/ceph/mgr/{{ cluster }}-{{ ansible_hostname }}/keyring
-    owner: "ceph"
-    group: "ceph"
-    mode: "0600"
-  when:
-    - cephx
+  changed_when: false
+  with_together:
+    - "{{ ceph_config_keys }}"
+    - "{{ statconfig.results }}"
+  when: item.1.stat.exists == true
 
 - name: ensure systemd service override directory exists
   file:
